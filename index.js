@@ -54,9 +54,9 @@ function loadCSV(filePath, tableName, columns) {
        // 👈 This will confirm reading is working
       const values = columns.map(col => row[col]);
       db.run(
-        `INSERT INTO ${tableName} (${columns.join(',')}) VALUES (${columns.map(() => '?').join(',')})`,
-        values
-      );
+          `INSERT OR IGNORE INTO ${tableName} (${columns.join(',')}) VALUES (${columns.map(() => '?').join(',')})`,
+          values
+        );  
     })
     .on('end', () => {
       console.log(`✅ Finished loading ${tableName}`);
@@ -96,14 +96,14 @@ loadCSV('./orders.csv', 'orders', [
 
 // APIs
 app.get('/users', (req, res) => {
-  db.all('SELECT * FROM users LIMIT 10', [], (err, rows) => {
+  db.all('SELECT * FROM users', [], (err, rows) => {
     if (err) return res.status(500).send(err.message);
     res.json(rows);
   });
 });
 
 app.get('/orders', (req, res) => {
-  db.all('SELECT * FROM orders LIMIT 10', [], (err, rows) => {
+  db.all('SELECT * FROM orders', [], (err, rows) => {
     if (err) return res.status(500).send(err.message);
     res.json(rows);
   });
@@ -248,3 +248,4 @@ app.get('/api/stats/orders-by-status', (req, res) => {
     res.json(rows);
   });
 });
+
