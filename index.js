@@ -182,3 +182,69 @@ app.use((req, res) => {
 
 
 app.listen(3001, () => console.log('Server started on port 3001'));
+
+//for orders
+app.get('/api/orders', (req, res) => {
+  db.all('SELECT * FROM orders', [], (err, rows) => {
+    if (err) {
+      console.error("DB error in /api/orders:", err.message);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+    res.json(rows);
+  });
+});
+
+
+app.get('/api/orders/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: "Invalid order ID" });
+
+  db.get('SELECT * FROM orders WHERE order_id = ?', [id], (err, row) => {
+    if (err) {
+      console.error("DB error in /api/orders/:id:", err.message);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+    if (!row) return res.status(404).json({ error: "Order not found" });
+
+    res.json(row);
+  });
+});
+
+app.get('/api/users/:id/orders', (req, res) => {
+  const userId = parseInt(req.params.id);
+  if (isNaN(userId)) return res.status(400).json({ error: "Invalid user ID" });
+
+  db.all('SELECT * FROM orders WHERE user_id = ?', [userId], (err, rows) => {
+    if (err) {
+      console.error("DB error in /api/users/:id/orders:", err.message);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+    if (!rows.length) return res.status(404).json({ error: "No orders found for this user" });
+
+    res.json(rows);
+  });
+});
+
+// Total orders
+app.get('/api/stats/total-orders', (req, res) => {
+  db.get('SELECT COUNT(*) AS total_orders FROM orders', (err, row) => {
+    if (err) return res.status(500).json({ error: "Internal Server Error" });
+    res.json(row);
+  });
+});
+
+// Average items per order
+app.get('/api/stats/average-items', (req, res) => {
+  db.get('SELECT AVG(num_of_item) AS avg_items FROM orders', (err, row) => {
+    if (err) return res.status(500).json({ error: "Internal Server Error" });
+    res.json(row);
+  });
+});
+
+// Orders grouped by status
+app.get('/api/stats/orders-by-status', (req, res) => {
+  db.all('SELECT status, COUNT(*) AS count FROM orders GROUP BY status', (err, rows) => {
+    if (err) return res.status(500).json({ error: "Internal Server Error" });
+    res.json(rows);
+  });
+});
